@@ -1,252 +1,108 @@
-# Claude Configuration Repository
+# CLAUDE.md
 
-Manage Claude Code custom commands, skills and hooks with GNU Stow for easy version control and portability.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Overview
+## Repository Overview
 
-This repository provides a clean way to manage your Claude Code configurations:
+This repository provides custom commands and workflows for Claude Code, managed with GNU Stow for version-controlled, portable configuration. It implements a structured software development methodology with distinct phases: specification, planning, implementation, and PR management.
 
-- **Custom Commands**: Shell scripts available in Claude Code
-- **Custom Skills**: Specialized knowledge and workflows for Claude
+## Stow Management Commands
 
-Using GNU Stow, you can:
-
-- Version control all your Claude configurations
-- Easily sync across multiple machines
-- Quickly enable/disable configurations
-- Share with others or backup to GitHub
-
-## Repository Structure
-
-```
-claude-config/
-├── claude/                    # Stow package
-│   └── .claude/              # Mirrors ~/.claude structure
-│       ├── commands/         # Custom commands
-│       │   ├── example.sh
-│       │   └── another.sh
-│       └── skills/           # Custom skills
-│           ├── my-skill/
-│           │   └── SKILL.md
-│           └── another-skill/
-│               └── SKILL.md
-├── README.md
-└── setup.sh                  # Optional setup script
-```
-
-The `claude` folder is required by Stow - it's the "package" that gets symlinked to your home directory.
-
-## Installation
-
-### Prerequisites
-
-Install GNU Stow:
-
+### Deploy configurations to ~/.claude/
 ```bash
-brew install stow
+stow --target=$HOME/.claude .
 ```
 
-### Setup
-
-1. Clone this repository:
-
-   ```bash
-   git clone <your-repo-url> ~/claude-config
-   cd ~/claude-config
-   ```
-
-2. Create the directory structure:
-
-   ```bash
-   mkdir -p claude/.claude/commands
-   mkdir -p claude/.claude/skills
-   ```
-
-3. Deploy with Stow:
-   ```bash
-   stow claude
-   ```
-
-That's it! Stow creates symlinks from `~/.claude/` to your repository.
-
-## Usage
-
-### Adding a New Command
-
-1. Create your command script:
-
-   ```bash
-   vim claude/.claude/commands/my-command.sh
-   ```
-
-2. Add your script content:
-
-   ```bash
-   #!/bin/bash
-   # Description: What this command does
-   echo "Hello from my custom command!"
-   ```
-
-3. Make it executable:
-
-   ```bash
-   chmod +x claude/.claude/commands/my-command.sh
-   ```
-
-4. Commit to Git:
-   ```bash
-   git add claude/.claude/commands/my-command.sh
-   git commit -m "Add my-command"
-   ```
-
-### Adding a New Skill
-
-1. Create the skill directory and file:
-
-   ```bash
-   mkdir -p claude/.claude/skills/my-skill
-   vim claude/.claude/skills/my-skill/SKILL.md
-   ```
-
-2. Write your skill documentation:
-
-   ```markdown
-   # My Skill
-
-   Description of what this skill provides...
-
-   ## Knowledge
-
-   - Specific domain expertise
-   - Best practices
-   - Common patterns
-   ```
-
-3. Commit to Git:
-   ```bash
-   git add claude/.claude/skills/my-skill/
-   git commit -m "Add my-skill"
-   ```
-
-### Managing Your Setup
-
-**Update symlinks** (after adding/removing files):
-
+### Update symlinks after changes
 ```bash
-cd ~/claude-config
-stow -R claude  # Restow (refresh links)
+stow --target=$HOME/.claude -R .
 ```
 
-**Temporarily disable**:
-
+### Remove symlinks
 ```bash
-cd ~/claude-config
-stow -D claude  # Delete symlinks
+stow --target=$HOME/.claude -D .
 ```
 
-**Re-enable**:
-
+### Preview changes without applying
 ```bash
-cd ~/claude-config
-stow claude     # Recreate symlinks
+stow --target=$HOME/.claude -n -v .
 ```
 
-**Check status**:
+## Architecture Overview
 
-```bash
-ls -la ~/.claude/
-# Should show:
-# commands -> ../claude-config/claude/.claude/commands
-# skills -> ../claude-config/claude/.claude/skills
-```
+The repository mirrors the `~/.claude/` directory structure:
 
-## Syncing Across Machines
+- **commands/**: Slash commands organized by workflow phase (spec, plan, implementation, pr, freestyle)
+- **templates/**: Base templates (currently spec.md) for initializing task files
+- **skills/**: Custom skills directory (empty, available for future extensions)
+- **.stow-local-ignore**: Keeps README.md and CLAUDE.md in repo, not symlinked
 
-### First Machine (setup)
+### Task Workspace Pattern
 
-```bash
-cd ~/claude-config
-git add .
-git commit -m "Update configurations"
-git push origin main
-```
+Commands operate on task directories at `.claude/tasks/<task-name>/` containing:
+- **spec.md**: Requirements, scope, implementation notes, clarifications
+- **plan.md** or **claude_plan_vXX.md**: Versioned implementation plans
+- **log.md**: Iteration history tracking implementation progress
 
-### Other Machines (sync)
+Plans are versioned (v01, v02, etc.) when refined. Each iteration appends to log.md with changes and test results.
 
-```bash
-# Initial setup
-git clone <your-repo-url> ~/claude-config
-cd ~/claude-config
-stow claude
+## Workflow Phases
 
-# Later updates
-cd ~/claude-config
-git pull
-stow -R claude  # Refresh symlinks if needed
-```
+### 1. Specification Phase (`/spec/*`)
+Iteratively refine requirements through clarifying questions:
+- `/spec:create <task>` - Bootstrap new task with template
+- `/spec:iterate <task>` - Generate clarifying questions
+- `/spec:iterate-questions <task>` - Integrate answered questions into spec
+- `/spec:plan-refactor <task>` - Create refactoring plan preserving tests
 
-## Examples
+### 2. Planning Phase (`/plan/*`)
+Transform specifications into actionable plans:
+- `/plan:iterate <task>` - Generate or refine versioned implementation plan with test-driven iterations
 
-### Example Command: `git-recent.sh`
+### 3. Implementation Phase (`/implementation/*`)
+Execute plans iteratively with full context:
+- `/implementation:context <task>` - Load all task context (spec, plan, questions, log)
+- `/implementation:iterate <task>` - Execute ONE iteration, run tests, update log
 
-```bash
-#!/bin/bash
-# claude/.claude/commands/git-recent.sh
-# Show recent git commits across all branches
+**Key Implementation Principles:**
+- One iteration per command execution
+- Tests must pass before iteration is complete
+- Progress documented in log.md after each iteration
+- Avoid inline comments; prefer clear naming and block documentation
 
-git log --all --oneline --graph --decorate -20
-```
+### 4. Pull Request Tools (`/pr/*`)
+Analyze and manage GitHub PRs (requires `gh` CLI):
+- `/pr:create-description <number>` - Generate concise PR description from changes
+- `/pr:explain <number>` - Analyze what PR does and identify issues
+- `/pr:review-comments <number>` - Summarize unresolved review comments
 
-### Example Skill: `code-review`
+### 5. Freestyle Refactoring (`/freestyle/*`)
+Quick refactoring without full spec/plan workflow:
+- `/freestyle:refactor [focus-area]` - Setup refactoring session with behavior-preserving guidelines
 
-Create `claude/.claude/skills/code-review/SKILL.md`:
+## Development Patterns
 
+### Adding New Commands
+1. Create markdown file in appropriate `commands/` subdirectory
+2. Include frontmatter with `description` and `argument-hint`
+3. Document the process with numbered steps
+4. Run `stow --target=$HOME/.claude -R .` to update symlinks
+
+### Command File Format
 ```markdown
-# Code Review Expert
+---
+description: Brief description shown in command list
+argument-hint: What the user should provide as argument
+---
 
-## Focus Areas
-
-- Security vulnerabilities
-- Performance bottlenecks
-- Code maintainability
-- Test coverage gaps
-- Documentation needs
-
-## Review Checklist
-
-1. Does the code follow team conventions?
-2. Are edge cases handled?
-3. Is error handling appropriate?
-4. Are there any obvious bugs?
-5. Is the code self-documenting?
+Command explanation and process steps...
 ```
 
-## Troubleshooting
+### Modifying Templates
+Templates in `templates/` are copied (not symlinked) when tasks are initialized. Changes affect only new tasks.
 
-**"command not found" errors**
+## Requirements
 
-- Ensure scripts have shebang: `#!/bin/bash`
-- Check execute permissions: `chmod +x claude/.claude/commands/*.sh`
-
-**Symlinks not working**
-
-- Verify Stow installation: `which stow`
-- Check for conflicts: `stow -n claude` (dry run)
-- Remove and recreate: `stow -D claude && stow claude`
-
-**Skills not loading**
-
-- Each skill needs a `SKILL.md` file
-- Check file permissions: `ls -la claude/.claude/skills/`
-
-## Best Practices
-
-1. **Test locally first**: Run commands before committing
-2. **Document everything**: Add descriptions to all commands and skills
-3. **Use meaningful names**: `format-json.sh` not `fj.sh`
-4. **Keep secrets out**: Use environment variables, never hardcode credentials
-5. **Regular commits**: Track changes incrementally
-
-## License
-
-[Your chosen license]
+- [Claude Code](https://claude.com/code)
+- GNU Stow: `brew install stow`
+- GitHub CLI (`gh`): Required for `/pr/*` commands
