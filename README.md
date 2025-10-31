@@ -22,9 +22,18 @@ claude-configs/
 │   ├── plan/             # Planning commands
 │   ├── pr/               # Pull request tools
 │   └── spec/             # Specification management
-├── skills/               # Custom skills (currently empty)
-├── templates/            # Templates for specs and other files
-│   └── spec.md
+├── hooks/                 # Hook scripts for project-level configuration
+│   ├── skill-activation-prompt.sh
+│   ├── skill-activation-prompt.ts
+│   └── post-tool-use-tracker.sh
+├── skills/                # Custom skills
+│   ├── rust-test-architect/
+│   └── skill-developer/
+├── templates/             # Templates for specs and other files
+│   ├── spec.md
+│   ├── project-settings.json
+│   └── skill-rules.json
+├── install-project.sh     # Script to install configs into individual projects
 ├── .gitignore            # Ignore user-specific settings
 ├── .stow-local-ignore    # Tell stow to ignore README, CLAUDE.md, etc.
 ├── CLAUDE.md             # Project-specific Claude Code instructions
@@ -70,6 +79,72 @@ ls -la ~/.claude/
 # commands -> ../claude-configs/commands
 # templates -> ../claude-configs/templates
 ```
+
+### Project-Level Configuration
+
+In addition to global configuration at `~/.claude/`, you can install project-specific Claude Code configurations into individual projects. This is useful for:
+
+- **Skill activation hooks** that suggest relevant skills based on your prompts
+- **Project-specific settings** like custom permissions or hooks
+- **Team-shared configurations** that can be committed to the project repository
+
+#### Installing into a Project
+
+From within any project directory, run:
+
+```bash
+/Users/sergigonzalez/dev/personal/claude-configs/install-project.sh
+```
+
+Or create an alias in your shell config for convenience:
+
+```bash
+alias claude-install='~/dev/personal/claude-configs/install-project.sh'
+```
+
+Then from any project:
+
+```bash
+claude-install
+```
+
+#### What Gets Installed
+
+The script creates a `.claude/` directory in your project with:
+
+- **`.claude/settings.json`** - Project-level settings with hooks configured to use project-local scripts
+- **`.claude/hooks/`** - Hook scripts that run before/after Claude Code operations
+  - `skill-activation-prompt.sh` + `.ts` - Suggests relevant skills based on your prompts
+  - `post-tool-use-tracker.sh` - Tracks file edits for build automation
+- **`.claude/skills/skill-rules.json`** - Configuration for which skills activate on which keywords/patterns
+
+#### Customizing Project Configs
+
+After installation, you can customize the project's `.claude/skills/skill-rules.json` to add project-specific skill activation rules:
+
+```json
+{
+  "version": "1.0",
+  "skills": {
+    "rust-test-architect": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["test", "testing"],
+        "intentPatterns": ["write.*test", "add.*test"]
+      }
+    }
+  }
+}
+```
+
+#### Sharing Configs with Your Team
+
+You can choose to:
+
+- **Personal configs**: Add `.claude/` to your project's `.gitignore` to keep configs local
+- **Team configs**: Commit `.claude/` to share hooks and skill activation rules with your team
 
 ## Command Reference
 
