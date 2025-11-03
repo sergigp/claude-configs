@@ -21,39 +21,40 @@ echo -e "Script location: ${YELLOW}$SCRIPT_DIR${NC}"
 echo -e "Target directory: ${YELLOW}$TARGET_DIR${NC}"
 echo ""
 
-# Create .claude directory
-echo -e "${GREEN}✓${NC} Creating .claude directory..."
+# Create .claude directory structure
+echo -e "${GREEN}✓${NC} Creating .claude directory structure..."
 mkdir -p "$TARGET_DIR/.claude"
+mkdir -p "$TARGET_DIR/.claude/tasks"
 
-# Copy settings.json
-echo -e "${GREEN}✓${NC} Copying settings.json..."
-cp "$SCRIPT_DIR/templates/project-settings.json" "$TARGET_DIR/.claude/settings.json"
-
-# Copy hooks directory
-echo -e "${GREEN}✓${NC} Copying hooks directory..."
-cp -r "$SCRIPT_DIR/hooks" "$TARGET_DIR/.claude/"
-
-# Set executable permissions on hooks
-echo -e "${GREEN}✓${NC} Setting executable permissions on hooks..."
-chmod +x "$TARGET_DIR/.claude/hooks"/*.sh
-
-# Create skills directory and copy skill-rules.json
-echo -e "${GREEN}✓${NC} Creating skills directory and copying skill-rules.json..."
-mkdir -p "$TARGET_DIR/.claude/skills"
-cp "$SCRIPT_DIR/templates/skill-rules.json" "$TARGET_DIR/.claude/skills/skill-rules.json"
+# Create symlink to global agents (optional - can be customized per project)
+echo -e "${GREEN}✓${NC} Linking to global agents..."
+if [ -d "$HOME/.claude/agents" ]; then
+    # Remove existing agents (symlink or directory)
+    if [ -L "$TARGET_DIR/.claude/agents" ]; then
+        echo -e "   Updating existing symlink..."
+        rm "$TARGET_DIR/.claude/agents"
+    elif [ -d "$TARGET_DIR/.claude/agents" ]; then
+        echo -e "${YELLOW}⚠${NC}  .claude/agents exists as directory, replacing with symlink..."
+        rm -rf "$TARGET_DIR/.claude/agents"
+    fi
+    ln -s "$HOME/.claude/agents" "$TARGET_DIR/.claude/agents"
+    echo -e "   ✓ Symlinked to global agents"
+else
+    echo -e "${YELLOW}⚠${NC}  Global agents directory not found at ~/.claude/agents"
+    echo -e "   Run 'stow --target=\$HOME/.claude .' from the claude-configs repo first"
+fi
 
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ Project setup complete!${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Files created:"
-echo "  • .claude/settings.json"
-echo "  • .claude/hooks/ (with executable scripts)"
-echo "  • .claude/skills/skill-rules.json"
+echo "Directories created:"
+echo "  • .claude/agents (symlinked to global agents)"
+echo "  • .claude/tasks (for task specifications and plans)"
 echo ""
 echo "Next steps:"
-echo "  1. Customize .claude/skills/skill-rules.json for project-specific skills"
-echo "  2. Consider adding .claude/ to your project's .gitignore if configs are personal"
-echo "  3. Or commit .claude/ to share configs with your team"
+echo "  1. Use /spec:create <task-name> to create a new task in .claude/tasks/"
+echo "  2. Consider adding .claude/ to your project's .gitignore if you want to keep task files local"
+echo "  3. Or commit .claude/tasks/ to share task specifications with your team"
 echo ""

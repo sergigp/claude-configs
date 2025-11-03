@@ -32,9 +32,11 @@ stow --target=$HOME/.claude -n -v .
 
 The repository mirrors the `~/.claude/` directory structure:
 
+- **agents/**: Subagent definitions for specialized AI assistants (rust-test-architect)
 - **commands/**: Slash commands organized by workflow phase (spec, plan, implementation, pr, freestyle)
 - **templates/**: Base templates (currently spec.md) for initializing task files
-- **skills/**: Custom skills directory (empty, available for future extensions)
+- **skills/**: Custom skills (skill-developer)
+- **install-project.sh**: Script to set up .claude/ directories in projects (symlinked to ~/.claude/)
 - **.stow-local-ignore**: Keeps README.md and CLAUDE.md in repo, not symlinked
 
 ### Task Workspace Pattern
@@ -87,6 +89,13 @@ Quick refactoring without full spec/plan workflow:
 2. Include frontmatter with `description` and `argument-hint`
 3. Document the process with numbered steps
 4. Run `stow --target=$HOME/.claude -R .` to update symlinks
+
+### Adding New Subagents
+1. Create markdown file in `agents/` directory (e.g., `agents/my-agent.md`)
+2. Include YAML frontmatter with `name`, `description`, and optionally `model` and `tools`
+3. Write comprehensive system prompt that defines the agent's expertise and behavior
+4. Run `stow --target=$HOME/.claude -R .` to update symlinks
+5. Invoke with "Use the <agent-name> subagent to <task>" or let Claude delegate automatically
 
 ### Command File Format
 ```markdown
