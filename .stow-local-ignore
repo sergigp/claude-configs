@@ -1,7 +1,0 @@
-# Ignore files that should not be stowed
-
-^/README\.md$
-^/CLAUDE\.md$
-^/\.git
-^/\.gitignore$
-^/\.stow-local-ignore$
